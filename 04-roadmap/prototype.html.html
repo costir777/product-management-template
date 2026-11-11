@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add to wallet – prototype</title>
+<style>
+:root{
+  --bg:#e9edf0; --ink:#14232b; --muted:#5a6b74; --line:#d5dde2;
+  --primary:#0d5c63; --primary-ink:#fff; --soft:#f4f7f8; --ok:#1f7a4d; --warn:#9a5b00; --warnbg:#fff4de;
+  --card1:#0d5c63; --card2:#16808a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;gap:24px;justify-content:center;align-items:flex-start;padding:24px;flex-wrap:wrap;min-height:100vh}
+.phone{width:360px;height:640px;background:#fff;border-radius:28px;box-shadow:0 0 0 8px #14232b,0 18px 40px rgba(20,35,43,.25);overflow:hidden;position:relative;flex:none}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:28px 20px 20px;overflow-y:auto}
+.screen.on{display:flex}
+h1{font-size:26px;line-height:1.15;margin:8px 0 14px;font-weight:700;letter-spacing:-.01em}
+h1.c,.c{text-align:center}
+p{margin:0}
+.card{width:100%;aspect-ratio:1.586;border-radius:16px;background:linear-gradient(135deg,var(--card1),var(--card2));color:#fff;position:relative;padding:16px 18px;box-shadow:0 8px 18px rgba(13,92,99,.28);flex:none}
+.card .chip{width:36px;height:26px;border-radius:5px;background:linear-gradient(135deg,#e8d9a6,#c7b06a)}
+.card .num{position:absolute;left:18px;bottom:44px;font-size:20px;letter-spacing:.12em}
+.card .nm{position:absolute;left:18px;bottom:16px;font-size:13px;opacity:.9}
+.card .brand{position:absolute;right:18px;top:16px;font-size:12px;opacity:.85;font-weight:700}
+.card .tag{position:absolute;right:14px;bottom:14px;background:#fff;color:var(--ok);font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px}
+.card.thumb{width:120px;margin:34px auto 22px;padding:9px 10px;border-radius:10px}
+.card.thumb .chip{width:20px;height:14px}
+.card.thumb .num{font-size:9px;left:10px;bottom:22px}
+.card.thumb .nm{font-size:7px;left:10px;bottom:9px}
+.card.thumb .brand{display:none}
+.note{margin:16px 0 14px;padding:12px 14px;background:var(--warnbg);border-left:4px solid var(--warn);border-radius:6px;font-size:14px;line-height:1.4}
+.note b.lbl{display:block;color:var(--warn);font-size:12px;margin-bottom:4px}
+.spacer{flex:1;min-height:8px}
+.btn{width:100%;min-height:52px;border-radius:14px;border:2px solid transparent;font:inherit;font-size:17px;font-weight:700;cursor:pointer;margin-top:8px}
+.btn.pri{background:var(--primary);color:var(--primary-ink)}
+.btn.sec{background:transparent;color:var(--primary);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn:focus-visible,.ctl button:focus-visible,.ctl select:focus-visible{outline:3px solid #f2a900;outline-offset:2px}
+.spin{width:44px;height:44px;border:5px solid var(--line);border-top-color:var(--primary);border-radius:50%;margin:0 auto 18px;animation:s 0.9s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.status{font-size:18px;text-align:center}
+.reason{font-size:16px;line-height:1.4;background:var(--soft);padding:14px;border-radius:10px;margin-bottom:10px}
+.check{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;font-size:38px;line-height:64px;text-align:center;margin:14px auto 8px}
+.line{font-size:16px;line-height:1.45;color:var(--muted);text-align:center;margin:10px 4px 16px}
+.ready{width:64px;height:64px;border-radius:50%;background:var(--primary);margin:14px auto 8px;position:relative}
+.ready:after{content:"";position:absolute;left:22px;top:12px;width:14px;height:28px;border:solid #fff;border-width:0 5px 5px 0;transform:rotate(45deg)}
+.ctl{width:380px;max-width:100%;background:#fff;border-radius:14px;padding:16px;font-size:14px;box-shadow:0 2px 10px rgba(20,35,43,.1)}
+.ctl h2{font-size:15px;margin:0 0 4px}
+.ctl .sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+.ctl label{display:block;font-weight:700;margin:10px 0 4px;font-size:13px}
+.ctl select,.ctl button{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.ctl select{width:100%}
+.ctl button{cursor:pointer;margin:8px 6px 0 0}
+#log{margin:10px 0 0;padding:8px;background:var(--soft);border-radius:8px;height:230px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;list-style:none}
+#log li{border-bottom:1px dashed var(--line);padding:2px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+
+<div class="phone" aria-label="Phone prototype, 360 pixels wide">
+
+  <!-- Screen 1 -->
+  <section class="screen" id="s1" aria-labelledby="h1a">
+    <h1 id="h1a">You're approved</h1>
+    <div class="card" aria-label="Card ending 4821">
+      <span class="brand">BU Pay &amp; Credit</span><div class="chip"></div>
+      <div class="num">•••• 4821</div><div class="nm">Alex Sample</div>
+    </div>
+    <div class="note" id="costNote">
+      <b class="lbl">Placeholder, not approved. Final wording needs compliance sign-off.</b>
+      What the card costs: [approved text]. What it does not do: [approved text]. Credit score: [approved text].
+    </div>
+    <div class="spacer"></div>
+    <button class="btn pri" id="addBtn">Add to wallet</button>
+    <button class="btn sec" id="notNow1">Not now</button>
+  </section>
+
+  <!-- Screen 2 progress -->
+  <section class="screen" id="s2p" aria-live="polite">
+    <div class="card thumb"><div class="chip"></div><div class="num">•••• 4821</div><div class="nm">Alex Sample</div></div>
+    <div class="spin" aria-hidden="true"></div>
+    <p class="status">Adding your card to your wallet</p>
+  </section>
+
+  <!-- Screen 2 failure -->
+  <section class="screen" id="s2f" aria-labelledby="h2f">
+    <h1 id="h2f">We couldn't add your card</h1>
+    <p class="reason" id="reasonLine"></p>
+    <div class="spacer"></div>
+    <button class="btn pri" id="retryBtn">Try again</button>
+    <button class="btn sec" id="notNow2">Not now</button>
+  </section>
+
+  <!-- Screen 3 added -->
+  <section class="screen" id="s3a" aria-labelledby="h3a">
+    <div class="check" aria-hidden="true">✓</div>
+    <h1 class="c" id="h3a">Your card is in your wallet</h1>
+    <div class="card"><span class="brand">BU Pay &amp; Credit</span><div class="chip"></div>
+      <div class="num">•••• 4821</div><div class="nm">Alex Sample</div><span class="tag">In wallet</span></div>
+    <p class="line">Use it online or at the till</p>
+    <div class="spacer"></div>
+    <button class="btn pri" id="done1">Done</button>
+  </section>
+
+  <!-- Screen 3 skipped -->
+  <section class="screen" id="s3s" aria-labelledby="h3s">
+    <div class="ready" aria-hidden="true"></div>
+    <h1 class="c" id="h3s">Your card is ready</h1>
+    <p class="line">You can use it online now. Adding it to your wallet is only needed to pay in shops</p>
+    <div class="spacer"></div>
+    <button class="btn pri" id="done2">Done</button>
+  </section>
+</div>
+
+<aside class="ctl" aria-label="Prototype controls (not part of the product)">
+  <h2>Prototype controls</h2>
+  <div class="sub">Not part of the product. Done restarts the flow as a new session.</div>
+  <label for="outcome">Next add outcome</label>
+  <select id="outcome">
+    <option value="success">Success (about 1.8 s)</option>
+    <option value="conn">Connection lost (reason 1)</option>
+    <option value="nowallet">Wallet not available (reason 2)</option>
+    <option value="slow">Slow, no result (times out at 5 s, reason 3)</option>
+    <option value="late">Slow, succeeds at 6 s (after the timeout)</option>
+  </select>
+  <label for="segment">Segment tag for events</label>
+  <select id="segment">
+    <option>light</option><option>regular</option><option>heavy</option>
+  </select>
+  <label for="prewallet" style="display:flex;gap:8px;align-items:center;font-weight:400">
+    <input type="checkbox" id="prewallet"> Card already in wallet (applies on restart)
+  </label>
+  <button id="cancelBtn" title="Simulates closing the wallet sheet or tapping back">Cancel during progress</button>
+  <button id="restart">Restart</button>
+  <ul id="log" aria-label="Event log, read only"></ul>
+</aside>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var screens = ['s1','s2p','s2f','s3a','s3s'];
+  var TIMEOUT = 5000, MAX_RETRY = 3;
+  var state, timers = [], attempt = 0, t0;
+
+  var REASONS = {
+    conn: "Your connection was lost while adding the card.",
+    nowallet: "A wallet isn't available on this phone.",
+    slow: "Adding the card took longer than 5 seconds."
+  };
+
+  function log(name, extra){
+    var d = new Date(), ts = d.toTimeString().slice(0,8) + '.' + String(d.getMilliseconds()).padStart(3,'0');
+    var li = document.createElement('li');
+    li.textContent = ts + ' [' + $('segment').value + '] ' + name + (extra ? ' (' + extra + ')' : '');
+    $('log').appendChild(li);
+    $('log').scrollTop = $('log').scrollHeight;
+  }
+
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+
+  function show(id, label){
+    screens.forEach(function(s){ $(s).classList.toggle('on', s === id); });
+    state.screen = id;
+    log('screen viewed', label || id);
+    var h = document.querySelector('#'+id+' h1'); 
+  }
+
+  function reset(){
+    clearTimers(); attempt++;
+    state = { screen:null, retries:0, skipped:false, running:false, failed:false };
+    $('log').innerHTML = '';
+    if ($('prewallet').checked){ show('s3a','3 added (already in wallet)'); }
+    else show('s1','1 approval');
+  }
+
+  function startAdd(isRetry){
+    if (state.running) return;               // taps during progress are ignored (FR3)
+    state.running = true; state.failed = false;
+    var my = ++attempt;
+    if (isRetry){ state.retries++; log('add retried', 'retry ' + state.retries + ' of ' + MAX_RETRY); }
+    log('add started');
+    show('s2p','2 progress');                // shown synchronously, well under 300 ms
+    var mode = $('outcome').value;
+
+    function ok(){ if (my !== attempt) return; state.running = false; log('add succeeded'); show('s3a','3 added'); }
+    function fail(r, note){ if (my !== attempt) return; state.running = false; state.failed = true; log('add failed', note || r); showFail(r); }
+
+    if (mode === 'success') later(ok, 1800);
+    else if (mode === 'conn') later(function(){ fail('conn'); }, 1500);
+    else if (mode === 'nowallet') later(function(){ fail('nowallet'); }, 1000);
+    else {
+      later(function(){ fail('slow'); }, TIMEOUT);   // every attempt ends within 5 s (FR4)
+      if (mode === 'late') later(function(){
+        // success arrives after the failure was shown: replace it, no retry offered
+        if (my === attempt && state.screen === 's2f' && state.failed){ state.failed = false; log('add succeeded', 'late, replaced failure'); show('s3a','3 added'); }
+      }, 6000);
+    }
+  }
+
+  function showFail(r){
+    $('reasonLine').textContent = REASONS[r];
+    var retry = $('retryBtn'), nn = $('notNow2');
+    if (r === 'nowallet'){
+      retry.hidden = true;
+      nn.textContent = 'Continue';
+      nn.dataset.mode = 'continue';
+    } else {
+      nn.textContent = 'Not now';
+      nn.dataset.mode = 'skip';
+      retry.hidden = state.retries >= MAX_RETRY;   // at most 3 retries per session
+    }
+    show('s2f','2 failure: ' + r);
+  }
+
+  function skip(){
+    clearTimers(); attempt++;
+    state.running = false; state.skipped = true;
+    log('skipped');
+    show('s3s','3 skipped');
+  }
+
+  $('addBtn').onclick = function(){ startAdd(false); };
+  $('retryBtn').onclick = function(){ startAdd(true); };
+  $('notNow1').onclick = skip;
+  $('notNow2').onclick = skip;
+  $('done1').onclick = reset;
+  $('done2').onclick = reset;
+  $('restart').onclick = reset;
+  $('cancelBtn').onclick = function(){
+    if (!state.running) return;
+    clearTimers(); attempt++;
+    state.running = false;
+    log('add failed', 'cancelled by user');
+    show('s1','1 approval');                 // back to Screen 1, no error message
+  };
+
+  reset();
+})();
+</script>
+</body>
+</html>
